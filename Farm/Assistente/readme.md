@@ -37,3 +37,9 @@
 
 - **Captcha notification or solver
 nopecha for example
+
+
+
+// todos
+add a way to farm a and then b when it becomes unclicable
+ui will not update when no more troops are available so i think we can just fetch the initial quantities, the quantities needed for each model and then on each attack deduct and check before clicking if theres any troops to send the attack. 
