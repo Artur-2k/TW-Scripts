@@ -34,3 +34,6 @@
   - Limite máximo de muralha
   - Limite máximo de distância
   - Unidades disponiveis em cada ronda
+
+- **Captcha notification or solver
+nopecha for example
