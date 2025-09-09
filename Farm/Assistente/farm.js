@@ -214,6 +214,22 @@
             console.debug("Script loaded");
         }
 
+        // Retrieves the number of each type of unit currently present in the village
+        // Returns an object with unit types as keys and their counts as values
+        getUnitsPresent() {
+            const units = {
+                spear: parseInt(document.getElementById('spear').textContent, 10),
+                sword: parseInt(document.getElementById('sword').textContent, 10),
+                axe: parseInt(document.getElementById('axe').textContent, 10),   
+                archer: parseInt(document.getElementById('archer').textContent, 10),
+                spy: parseInt(document.getElementById('spy').textContent, 10),
+                light: parseInt(document.getElementById('light').textContent, 10),
+                marcher: parseInt(document.getElementById('marcher').textContent, 10),
+                heavy: parseInt(document.getElementById('heavy').textContent, 10),
+                knight: parseInt(document.getElementById('knight').textContent, 10)
+            };
+            return units;
+        }
     }
 
     async function farmA() {
@@ -246,5 +262,6 @@
         'use strict';
 
         const farmScript = FarmScript.instance;
+        console.log(farmScript.getUnitsPresent());
 
     })();
