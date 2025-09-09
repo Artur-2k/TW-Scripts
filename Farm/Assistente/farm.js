@@ -24,6 +24,8 @@
 
     class FarmScript {
         static #instance = null;
+        #unitsPresent = null;
+        #isRunning = false;
 
         constructor() {
             // Singleton enforcing
@@ -31,7 +33,11 @@
                 throw new Error("Instance already exists. Use FarmScript.instance to access it.");
             }
 
+            // Units on village
+            this.#unitsPresent = this.getUnitsPresent();
+
             this.savePreferences = this.savePreferences.bind(this); // needed to bind 'this' context in event listener
+            this.toggleStartStop = this.toggleStartStop.bind(this);
 
             // Load default configuration values
             this.loadPreferences();
@@ -39,11 +45,17 @@
             // Load Script Interface
             this.loadInterface();
 
-            
-
             // Attach event listener to save button
             document.getElementById('saveConfigBtn').addEventListener('click', this.savePreferences);
-            
+
+            // Attach event listener to run script button 
+            // this swaps run button to stop button and vice versa
+            document.getElementById('runScriptBtn').addEventListener('click', this.toggleStartStop);
+
+            // Start farming if it was running before page reload
+            if (this.#isRunning) {
+                this.startFarming();
+            }
         }
 
         static get instance() {
@@ -55,31 +67,43 @@
 
         // Load preferences from localStorage if they exist, otherwise use defaults
         loadPreferences() {
-            this.refreshInterval = localStorage.getItem('refreshInterval') || 60;
-            this.minSendTime = localStorage.getItem('minSendTime') || 500;
-            this.maxSendTime = localStorage.getItem('maxSendTime') || 2000;
-            this.maxDistance = localStorage.getItem('maxDistance') || 0;
-            this.maxWall = localStorage.getItem('maxWall') || 0;
-            this.modelA = localStorage.getItem('modelA') || true;
-            this.modelB = localStorage.getItem('modelB') || true;
-            this.yellowReportsOption = localStorage.getItem('yellowReportsOption') || false;
-            this.blueReportsOption = localStorage.getItem('blueReportsOption') || false;
+            this.refreshInterval = parseInt(localStorage.getItem('refreshInterval'), 10) || 60;
+            this.minSendTime = parseInt(localStorage.getItem('minSendTime'), 10) || 500;
+            this.maxSendTime = parseInt(localStorage.getItem('maxSendTime'), 10) || 2000;
+            this.maxDistance = parseInt(localStorage.getItem('maxDistance'), 10) || 999;
+            this.maxWall = parseInt(localStorage.getItem('maxWall'), 10) || 0;
+            this.modelA = localStorage.getItem('modelA') === "true";
+            this.modelB = localStorage.getItem('modelB') === "true";
+            this.allowYellowReports = localStorage.getItem('allowYellowReports') === "true";
+            this.allowBlueReports = localStorage.getItem('allowBlueReports') === "true";
 
-            console.debug("Preferences loaded");
+            this.#isRunning = localStorage.getItem('farmScriptRunning') === "true";
         }
 
         // Save preferences to localStorage and update variables
         savePreferences() {
             // Get values from input fields
-            this.refreshInterval = document.getElementById('refreshInterval').value;
-            this.minSendTime = document.getElementById('minInterval').value;    
-            this.maxSendTime = document.getElementById('maxInterval').value;
-            this.maxDistance = document.getElementById('maxDistance').value;
-            this.maxWall = document.getElementById('maxWall').value;
+            this.minSendTime = parseInt(document.getElementById('minInterval').value, 10) || 500;
+            this.maxSendTime = parseInt(document.getElementById('maxInterval').value, 10) || 2000;
+
+            if (this.minSendTime >= this.maxSendTime) {
+                alert("Min send interval must be less than max send interval.");
+                return;
+            }
+
+            this.refreshInterval = parseInt(document.getElementById('refreshInterval').value, 10) || 60;
+
+            if (this.refreshInterval < 5) {
+                alert("Refresh interval must be at least 5 seconds.");
+                return;
+            }
+
+            this.maxDistance = parseInt(document.getElementById('maxDistance').value, 10) || 999;
+            this.maxWall = parseInt(document.getElementById('maxWall').value, 10) || 0;
             this.modelA = document.getElementById('modelA').checked;
             this.modelB = document.getElementById('modelB').checked;
-            this.yellowReportsOption = document.getElementById('yellowReportsOption').checked;
-            this.blueReportsOption = document.getElementById('blueReportsOption').checked;
+            this.allowYellowReports = document.getElementById('allowYellowReports').checked;
+            this.allowBlueReports = document.getElementById('allowBlueReports').checked;
 
             // Save to localStorage
             localStorage.setItem('refreshInterval', this.refreshInterval);
@@ -89,12 +113,10 @@
             localStorage.setItem('maxWall', this.maxWall);
             localStorage.setItem('modelA', this.modelA);
             localStorage.setItem('modelB', this.modelB);
-            localStorage.setItem('yellowReportsOption', this.yellowReportsOption);
-            localStorage.setItem('blueReportsOption', this.blueReportsOption);
+            localStorage.setItem('allowYellowReports', this.allowYellowReports);
+            localStorage.setItem('allowBlueReports', this.allowBlueReports);
 
             alert("Configurations saved!");
-
-            console.debug("Preferences saved");
         }
 
 
@@ -189,10 +211,10 @@
                             <input id="modelB" type="checkbox" ${this.modelB ? 'checked' : ''} style="transform: scale(1.2);">
                         </td>
                         <td style="padding: 5px; background: #fff5d6; border: 1px solid #804000; text-align: center;">
-                            <input id="yellowReportsOption" type="checkbox" ${this.yellowReportsOption ? 'checked' : ''} style="transform: scale(1.2);">
+                            <input id="allowYellowReports" type="checkbox" ${this.allowYellowReports ? 'checked' : ''} style="transform: scale(1.2);">
                         </td>
                         <td style="padding: 5px; background: #fff5d6; border: 1px solid #804000; text-align: center;">
-                            <input id="blueReportsOption" type="checkbox" ${this.blueReportsOption ? 'checked' : ''} style="transform: scale(1.2);">
+                            <input id="allowBlueReports" type="checkbox" ${this.allowBlueReports ? 'checked' : ''} style="transform: scale(1.2);">
                         </td>
                     </tr>
                 </table>
@@ -205,13 +227,11 @@
                     </button>
 
                     <button id="runScriptBtn" class="btn" style="width: 150px; font-weight: bold; text-align: center; padding: 7px 0;">
-                        Run Script
+                       ${this.#isRunning ? "Stop Script" : "Run Script"}
                     </button>
                 </div>
             `; 
             document.querySelector("#content_value > h3").insertAdjacentElement('afterend', configContainer);
-
-            console.debug("Script loaded");
         }
 
         // Retrieves the number of each type of unit currently present in the village
@@ -230,38 +250,158 @@
             };
             return units;
         }
-    }
 
-    async function farmA() {
-        console.log("Farming...");
+        // parameters: row - the table row element corresponding to the farm entry
+        // returns the wall level of the target village as an integer
+        // if wall level is unknown assumes 0
+        getWallLevel(row) {
+            const wallLevel = parseInt(row.querySelector("td:nth-child(7)").textContent, 10);
+            return Number.isNaN(wallLevel) ? 0 : wallLevel;
+        }
 
-        // test to see if its working
-        const farmsA = document.querySelectorAll("#plunder_list > tbody > tr[id^=village_] > td:nth-child(9) > a");
+        // parameters: row - the table row element corresponding to the farm entry
+        // returns the distance to the target village as a string with one decimal place
+        // always returns a number, if distance is unknown returns Infinity
+        getDistance(row) {
+            const distance = parseFloat(row.querySelector("td:nth-child(8)").textContent);
+            return Number.isNaN(distance) ? Infinity : parseFloat(distance.toFixed(1));
+        }
 
-        for (let farm of farmsA) {
-
-            console.log("Current farm:", farm);
-
-            if (farm.classList.contains("farm_icon_disabled")) {
-                break;
+        // parameters: row - the table row element corresponding to the farm entry
+        // returns the report color of the target village as a string
+        // possible return values: "green", "yellow", "blue", "red_yellow", "red_blue", "red", or undefined
+        // if no color (error fetching color)
+        getReportColor(row) {
+            const reportColor = row.querySelector("td:nth-child(2) > img").getAttribute("data-title");
+            // This checks for the data-title, maybe check other servers for different ways
+            switch (reportColor) {
+                case "Vitoria total":
+                    return "green";
+                case "Baixas":
+                    return "yellow";
+                case "Espiado":
+                    return "blue";
+                case "Perdeu, mas danificou edifício(s)":
+                    return "red_yellow";
+                case "Perdeu, mas obteve informações":
+                    return "red_blue";
+                case "Derrotou":
+                    return "red";
+                default:
+                    break;
             }
-            
-            let min = 500; // Minimum interval in milliseconds
-            let max = 2000; // Maximum interval in milliseconds
-            let interval = Math.floor(Math.random() * (max - min + 1)) + min;
+            return undefined;
+        }
 
-            console.log(`Waiting for ${interval} ms before next action...`);
+        getModelUnits(model) {
+            let units;
+            if (model === 'A') {
+                units = document.querySelector("#content_value > div:nth-child(4) > div > form > table > tbody > tr:nth-child(2)")
+            } else if (model === 'B') {
+                units = document.querySelector("#content_value > div:nth-child(4) > div > form > table > tbody > tr:nth-child(4)")
+            } else {
+                throw new Error("Invalid model type. Use 'A' or 'B'.");
+            }
+            return {
+                    spear: parseInt(units.querySelector("td:nth-child(3) > input").value, 10),
+                    sword: parseInt(units.querySelector("td:nth-child(4) > input").value, 10),
+                    axe: parseInt(units.querySelector("td:nth-child(5) > input").value, 10),
+                    archer: parseInt(units.querySelector("td:nth-child(6) > input").value, 10),
+                    spy: parseInt(units.querySelector("td:nth-child(7) > input").value, 10),
+                    light: parseInt(units.querySelector("td:nth-child(8) > input").value, 10),
+                    marcher: parseInt(units.querySelector("td:nth-child(9) > input").value, 10),
+                    heavy: parseInt(units.querySelector("td:nth-child(10) > input").value, 10),
+                    knight: parseInt(units.querySelector("td:nth-child(11) > input").value, 10)
+                }
+        }
+
+        async startFarming() {
+            // Select all farm rows in the farm list table
+            // id^=village_ selects rows with ids starting with 'village_' (ie. farm entries)
+            // td:nth-child(9) > a selects the anchor tag that corresponds to the farm action a 
+            // td:nth-child(10) > a selects the anchor tag that corresponds to the farm action b
+
+            const farms = document.querySelectorAll("#plunder_list > tbody > tr[id^=village_]").filter(row => row.style.display !== "none");
+            for (let farm of farms) {
+                if (this.#isRunning === false) break; // Exit if script stopped
+
+                if (this.getWallLevel(farm) > this.maxWall) {
+                    continue; // Skip if wall level exceeds maxWall
+                }
+
+                if (this.getDistance(farm) > this.maxDistance) {
+                    continue; // Skip if distance exceeds maxDistance
+                }
+
+                const reportColor = this.getReportColor(farm);
+                if ((reportColor !== "green") && 
+                ((reportColor === "yellow" && !this.allowYellowReports) || 
+                (reportColor === "blue" && !this.allowBlueReports))) {
+                    continue; // Skip if report color is not allowed ( only green, yellow and blues )
+                }
+
+                if (this.#isRunning === false) break; // Redundancy check
+                let attackSent = false;
+
+                if (this.modelA) {
+                    attackSent = await this.farmModel(farm, 'A');
+                }
+                if (!attackSent && this.modelB) {
+                    attackSent = await this.farmModel(farm, 'B');
+                }
+                if (!attackSent) {
+                    break; // Exit loop if no attack was sent (either out of units or both models disabled)
+                }
+            }
+        }
+
+        // td:nth-child(9) > a selects the anchor tag that corresponds to the farm action a
+        // td:nth-child(10) > a selects the anchor tag that corresponds to the farm action b
+        // clicks the farm action a button for the given farm row
+        // this function assumes that the farm meets all criteria to be attacked and only checks if
+        // there are enough units to send the attack
+        async farmModel(farm, model) {
+            const modelUnits = this.getModelUnits(model);
+            
+            for (let unit in modelUnits) {
+                if (modelUnits[unit] > this.#unitsPresent[unit]) {
+                    return false; // Not enough units
+                }
+            }
+
+            // Random delay between minSendTime and maxSendTime
+            let interval = Math.floor(Math.random() * (this.maxSendTime - this.minSendTime + 1)) + this.minSendTime;
             await sleep(interval);
 
-            console.log("Clicking farm:", farm);
-            farm.click();
+            farm.querySelector(`td:nth-child(${model === 'A' ? 9 : 10}) > a`).click();
+
+            // Update units present after sending the attack
+            for (let unit in modelUnits) {
+                this.#unitsPresent[unit] -= modelUnits[unit];
+            }
+
+            return true; // Attack sent
         }
+
+        toggleStartStop() {
+            this.#isRunning = !this.#isRunning;
+            localStorage.setItem('farmScriptRunning', this.#isRunning);
+
+
+            const runBtn = document.getElementById('runScriptBtn');
+            if (this.#isRunning) {
+                runBtn.textContent = "Stop Script";
+                this.startFarming();
+            } else {
+                runBtn.textContent = "Run Script";
+            }
+        }   
+
     }
 
     (function() {
         'use strict';
 
         const farmScript = FarmScript.instance;
-        console.log(farmScript.getUnitsPresent());
-
+       
     })();
