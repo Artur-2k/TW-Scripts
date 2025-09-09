@@ -1,6 +1,6 @@
     // ==UserScript==
     // @name         Test Script
-    // @namespace    https://gub.com/Artur-2k/TW-Scripts
+    // @namespace    https://github.com/Artur-2k/TW-Scripts
     // @version      v1.0
     // @description  Learning scripting
     // @author       Mini
