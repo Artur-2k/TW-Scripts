@@ -5,6 +5,7 @@
     // @description  Learning scripting
     // @author       Mini
     // @match        https://pt109.tribalwars.com.pt/game.php?village=*&screen=am_farm
+    // @match        https://pt109.tribalwars.com.pt/game.php?screen=am_farm&village=*
     // @icon         https://cdn.iconscout.com/icon/premium/png-256-thumb/farming-icon-svg-png-download-1641339.png
     // @grant        none
     // ==/UserScript==
