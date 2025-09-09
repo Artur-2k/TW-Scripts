@@ -23,7 +23,7 @@
     }
 
     class FarmScript {
-        static #instance;
+        static #instance = null;
 
         constructor() {
             // Singleton enforcing
@@ -31,24 +31,29 @@
                 throw new Error("Instance already exists. Use FarmScript.instance to access it.");
             }
 
-            // Default configuration values
+            this.savePreferences = this.savePreferences.bind(this); // needed to bind 'this' context in event listener
+
+            // Load default configuration values
             this.loadPreferences();
 
             // Load Script Interface
             this.loadInterface();
 
+            
+
+            // Attach event listener to save button
             document.getElementById('saveConfigBtn').addEventListener('click', this.savePreferences);
             
         }
 
-        get instance() {
+        static get instance() {
             if (FarmScript.#instance === null) {
                 FarmScript.#instance = new FarmScript();
             }
             return FarmScript.#instance;
         }
 
-        // Load preferences from localStorage
+        // Load preferences from localStorage if they exist, otherwise use defaults
         loadPreferences() {
             this.refreshInterval = localStorage.getItem('refreshInterval') || 60;
             this.minSendTime = localStorage.getItem('minSendTime') || 500;
@@ -63,6 +68,7 @@
             console.debug("Preferences loaded");
         }
 
+        // Save preferences to localStorage and update variables
         savePreferences() {
             // Get values from input fields
             this.refreshInterval = document.getElementById('refreshInterval').value;
@@ -191,8 +197,9 @@
                     </tr>
                 </table>
 
-                <!-- Save Button -->
+                <!-- Buttons container-->
                 <div style="text-align: center; margin: 15px 0;">
+                    <!-- Save Button -->
                     <button id="saveConfigBtn" class="btn" style="width: 150px; font-weight: bold; text-align: center; padding: 7px 0;">
                         Save Configuration
                     </button>
@@ -238,6 +245,6 @@
     (function() {
         'use strict';
 
-        const farmScript = new FarmScript();
+        const farmScript = FarmScript.instance;
 
     })();
