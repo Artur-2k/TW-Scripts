@@ -321,37 +321,41 @@
             // td:nth-child(9) > a selects the anchor tag that corresponds to the farm action a 
             // td:nth-child(10) > a selects the anchor tag that corresponds to the farm action b
 
-            const farms = document.querySelectorAll("#plunder_list > tbody > tr[id^=village_]").filter(row => row.style.display !== "none");
-            for (let farm of farms) {
-                if (this.#isRunning === false) break; // Exit if script stopped
-
-                if (this.getWallLevel(farm) > this.maxWall) {
-                    continue; // Skip if wall level exceeds maxWall
-                }
-
-                if (this.getDistance(farm) > this.maxDistance) {
-                    continue; // Skip if distance exceeds maxDistance
-                }
-
-                const reportColor = this.getReportColor(farm);
-                if ((reportColor !== "green") && 
-                ((reportColor === "yellow" && !this.allowYellowReports) || 
-                (reportColor === "blue" && !this.allowBlueReports))) {
-                    continue; // Skip if report color is not allowed ( only green, yellow and blues )
-                }
-
-                if (this.#isRunning === false) break; // Redundancy check
+            // on a while cuz of page entry size and dynamic loading of rows 
+            while (this.#isRunning) {
                 let attackSent = false;
 
-                if (this.modelA) {
-                    attackSent = await this.farmModel(farm, 'A');
+                let farms = Array.from(document.querySelectorAll("#plunder_list > tbody > tr[id^=village_]")).filter(row => row.style.display !== "none");
+                if (farms.length === 0) {break;} // Exit if no farms available
+                for (let farm of farms) {
+                    if (this.getWallLevel(farm) > this.maxWall) {
+                        continue; // Skip if wall level exceeds maxWall
+                    }
+
+                    if (this.getDistance(farm) > this.maxDistance) {
+                        continue; // Skip if distance exceeds maxDistance
+                    }
+
+                    const reportColor = this.getReportColor(farm);
+                    if ((reportColor !== "green") && 
+                    ((reportColor === "yellow" && !this.allowYellowReports) || 
+                    (reportColor === "blue" && !this.allowBlueReports))) {
+                        continue; // Skip if report color is not allowed ( only green, yellow and blues )
+                    }
+
+                    if (this.#isRunning === false) break; // Redundancy check
+
+                    if (this.modelA) {
+                        attackSent = await this.farmModel(farm, 'A');
+                    }
+                    if (!attackSent && this.modelB) {
+                        attackSent = await this.farmModel(farm, 'B');
+                    }
+                    if (!attackSent) {
+                        break; // Exit loop if no attack was sent (either out of units or both models disabled)
+                    }
                 }
-                if (!attackSent && this.modelB) {
-                    attackSent = await this.farmModel(farm, 'B');
-                }
-                if (!attackSent) {
-                    break; // Exit loop if no attack was sent (either out of units or both models disabled)
-                }
+                if (!attackSent) break;
             }
         }
 
