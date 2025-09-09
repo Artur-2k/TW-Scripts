@@ -103,17 +103,23 @@ class FarmScript {
     // Save preferences to localStorage and update variables
     #savePreferences = () => {
         // Get values from input fields
-        this.minSendTime = parseInt(document.getElementById('minInterval').value, 10) || 500;
-        this.maxSendTime = parseInt(document.getElementById('maxInterval').value, 10) || 2000;
+        this.#minSendTime = parseInt(document.getElementById('minInterval').value, 10) || 500;
+        this.#maxSendTime = parseInt(document.getElementById('maxInterval').value, 10) || 2000;
 
-        if (this.minSendTime >= this.maxSendTime) {
+        if (this.#minSendTime >= this.#maxSendTime) {
             alert("Min send interval must be less than max send interval.");
             return;
         }
 
-        this.refreshInterval = parseInt(document.getElementById('refreshInterval').value, 10) * 1000 || 60000;
+        
+        // Adding a random noise to the refresh interval to avoid pattern detection
+        this.#refreshInterval = parseInt(document.getElementById('refreshInterval').value, 10) * 1000 || 60000;
+        
+        let maxNoise = 20000; 
+        let noise = (Math.random() * 2 * maxNoise) - maxNoise;
+        this.#refreshInterval += noise;
 
-        if (this.refreshInterval < 5000) {
+        if (this.#refreshInterval < 5000) {
             alert("Refresh interval must be at least 5 seconds.");
             return;
         }
