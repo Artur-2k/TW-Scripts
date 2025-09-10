@@ -119,8 +119,8 @@ class FarmScript {
         let noise = (Math.random() * 2 * maxNoise) - maxNoise;
         this.#refreshInterval += noise;
 
-        if (this.#refreshInterval < 5000) {
-            alert("Refresh interval must be at least 5 seconds.");
+        if (this.#refreshInterval < 25000) {
+            alert("Refresh interval must be at least 25 seconds.");
             return;
         }
 
