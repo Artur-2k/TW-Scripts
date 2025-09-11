@@ -4,8 +4,8 @@
 // @version      v1.0
 // @description  Learning scripting
 // @author       Mini
-// @match        https://pt*.tribalwars.com.pt/game.php?village=*&screen=am_farm
-// @match        https://pt*.tribalwars.com.pt/game.php?screen=am_farm&village=*
+// @match        https://pt109.tribalwars.com.pt/game.php?village=*&screen=am_farm
+// @match        https://pt109.tribalwars.com.pt/game.php?screen=am_farm&village=*
 // @icon         https://cdn.iconscout.com/icon/premium/png-256-thumb/farming-icon-svg-png-download-1641339.png
 // @grant        none
 // ==/UserScript==
@@ -176,7 +176,7 @@ class FarmScript {
                 </tr>
                 <tr>
                     <td style="padding: 5px; background: #fff5d6; border: 1px solid #804000; text-align: center;">
-                        <input id="refreshInterval" type="text" value="${this.#refreshInterval / 1000}" 
+                        <input id="refreshInterval" type="text" value="${Math.floor(this.#refreshInterval / 1000)}" 
                             style="width: 60px; background: #fff; text-align: center;" 
                             pattern="[0-9]*" title="Only numbers allowed">
                         <span style="font-size: 11px; color: #666;">(s)</span>
