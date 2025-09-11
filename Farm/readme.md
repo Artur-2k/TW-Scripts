@@ -38,11 +38,20 @@
   - Ataques enviados em um intervalo tempo com ruído
 
 ### 🚧 A implementar
-. . . . . . . . . . . . . . . . 
 
-. . . . . . . . . . . . . . . . 
+- **Minimum Troops on Village:**
 
-. . . . . . . . . . . . . . . . 
+  Allow configuration of a minimum number of units to remain in the village for each troop type. Before sending an attack, the script should check that the number of available units minus the units required for the attack is greater than or equal to the minimum set for that troop type.
+
+- **Smart Village Swapping:**
+
+  When out of available troops in the current village, automatically switch to another village with sufficient units. Ensure the swap logic is efficient and respects refresh timers to avoid excessive page reloads or rapid switching.
+
+- **Script State After Saving:**  (bug fix)
+
+  When saving configuration changes (e.g., enabling/disabling models), the script should maintain its running state if it was running before, unless a critical configuration change requires a restart.
+
+
 
 ### 📚 Como Usar
 
@@ -60,10 +69,10 @@
    Se quiser usar o script em servidores diferentes do PT:  
    - Localize as linhas 7 e 8 do script:  
      ```javascript
-     // @match        https://pt*.tribalwars.com.pt/game.php?village=*&screen=am_farm
-     // @match        https://pt*.tribalwars.com.pt/game.php?screen=am_farm&village=*
+     // @match        https://pt109.tribalwars.com.pt/game.php?village=*&screen=am_farm
+     // @match        https://pt109.tribalwars.com.pt/game.php?screen=am_farm&village=*
      ```
-   - Substitua `pt*.tribalwars.com.pt` pelo domínio do servidor que deseja usar
+   - Substitua `pt109.tribalwars.com.pt` pelo domínio do servidor que deseja usar
    
    **Exemplo:**
     ```javascript
