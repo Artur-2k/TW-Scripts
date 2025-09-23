@@ -439,7 +439,7 @@ async #startFarming() {
             // If we couldn't send any attack for this farm due to lack of units,
             // we can't attack any other farms either, so break
             if (!attackSent) {
-                return; // Exit the farming function completely
+                break;
             }
         }
 
