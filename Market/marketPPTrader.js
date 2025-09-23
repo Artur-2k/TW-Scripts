@@ -1,55 +1,19 @@
 // Your code here...
 // todo estava a trabalhar nos butoes de start stop sell buy active inactive
-// todo e a guardar as configs no localstorage
 // todo falta fazer a logica de comprar e vender
 // todo e fazer o script correr automaticamente a cada X segundos para dar scan
 
-
-/** 
-  * Get current resources and max warehouse capacity
-  * @returns {Object} An object containing current resources and max warehouse capacity as numbers
-  * @example
-  * const resources = getResources();
-  * console.log(resources);
-  * { currentWood: '1000', currentClay: '800', currentIron: '600', maxWarehouse: '2000' }
-  */
-function getCurrentResources() {
-  return {
-    currentWood: parseInt(document.getElementById('wood').textContent) || 0,
-    currentClay: parseInt(document.getElementById('stone').textContent) || 0,
-    currentIron: parseInt(document.getElementById('iron').textContent) || 0,
-    maxWarehouse: parseInt(document.getElementById('storage').textContent) || 0
-  }
-}
-
 /**
- * @returns {number} The maximum transport capacity of the merchant
- */
-function getMerchantCapacity() {
-  return parseInt(document.getElementById('market_merchant_max_transport').textContent) || 0;
-}
-
-/** 
- * Get incoming resources from trades
- * @returns {Object} An object containing incoming resources as numbers
+ * Pauses execution for a specified number of milliseconds.
+ *
+ * @param {number} ms - The duration to sleep in milliseconds.
+ * @returns {Promise<void>} A promise that resolves after the specified time.
+ *
  * @example
- * const incoming = getIncomingResources();
- * console.log(incoming);
- * { incomingWood: '200', incomingClay: '150', incomingIron: '100' }
+ * await sleep(1000); // Pauses for 1 second
  */
-function getIncomingResources() {
-  // this cuz they use dots as thousand separators
-  function getNumber(selector) {
-    const el = document.querySelector(selector);
-    if (!el) return 0;
-    return Number(el.textContent.split('.').join('')) || 0;
-  }
-
-  return {
-    incomingWood: getNumber('#market_status_bar > table:nth-child(2) > tbody > tr > th:nth-child(1) span.icon.header.wood'),
-    incomingClay: getNumber('#market_status_bar > table:nth-child(2) > tbody > tr > th:nth-child(2) span.icon.header.stone'),
-    incomingIron: getNumber('#market_status_bar > table:nth-child(2) > tbody > tr > th:nth-child(3) span.icon.header.iron')
-  };
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // injects empty HTML container
@@ -117,15 +81,15 @@ function loadHTML() {
           <!-- Max Resources Capacity -->
           <tr>
               <td style="padding:5px; background:#fff5d6; border:1px solid #804000; text-align:center;">
-                  <input id="maxWoodAllowed" type="text" style="width:70px; background:#fff; text-align:center;" pattern="[0-9]*" required>
+                  <input id="maxAllowedWood" type="text" style="width:70px; background:#fff; text-align:center;" pattern="[0-9]*" required>
                   <div style="font-size:11px; color:#666;">Max Wood Wanted</div>
               </td>
               <td style="padding:5px; background:#fff5d6; border:1px solid #804000; text-align:center;">
-                  <input id="maxClayAllowed" type="text" style="width:70px; background:#fff; text-align:center;" pattern="[0-9]*" required>
+                  <input id="maxAllowedClay" type="text" style="width:70px; background:#fff; text-align:center;" pattern="[0-9]*" required>
                   <div style="font-size:11px; color:#666;">Max Clay Wanted</div>
               </td>
               <td style="padding:5px; background:#fff5d6; border:1px solid #804000; text-align:center;">
-                  <input id="maxIronAllowed" type="text" style="width:70px; background:#fff; text-align:center;" pattern="[0-9]*" required>
+                  <input id="maxAllowedIron" type="text" style="width:70px; background:#fff; text-align:center;" pattern="[0-9]*" required>
                   <div style="font-size:11px; color:#666;">Max Iron Wanted</div>
               </td>
           </tr>
@@ -181,8 +145,6 @@ function loadHTML() {
   const venderBtn = document.getElementById("venderAtivoBtn");
   venderBtn.addEventListener("click", function(event) {
     event.preventDefault();
-    console.log("click vender");
-    console.log("content", venderBtn.textContent);
     if (venderBtn.textContent === "Sell Activated") {
       venderBtn.textContent = "Sell Deactivated";
       venderBtn.style.background = "#a52b27b6";
@@ -190,8 +152,6 @@ function loadHTML() {
       venderBtn.textContent = "Sell Activated";
       venderBtn.style.background = "linear-gradient(to bottom, #947a62 0%,#7b5c3d 22%,#6c4824 30%,#6c4824 100%)"; // default
     }
-    console.log("content after", venderBtn.textContent);
-    console.log("vender ativo", venderBtn.textContent === "Sell Activated");
     localStorage.setItem("venderAtivo", venderBtn.textContent === "Sell Activated");
   });
   // todo run / stop script
@@ -222,16 +182,16 @@ function loadConfigs() {
   let reserveWood = parseInt(localStorage.getItem("reserveWood"));
   let reserveClay = parseInt(localStorage.getItem("reserveClay"));
   let reserveIron = parseInt(localStorage.getItem("reserveIron"));
-  let maxWoodAllowed = parseInt(localStorage.getItem("maxWoodAllowed"));
-  let maxClayAllowed = parseInt(localStorage.getItem("maxClayAllowed"));
-  let maxIronAllowed = parseInt(localStorage.getItem("maxIronAllowed"));
+  let maxAllowedWood = parseInt(localStorage.getItem("maxAllowedWood"));
+  let maxAllowedClay = parseInt(localStorage.getItem("maxAllowedClay"));
+  let maxAllowedIron = parseInt(localStorage.getItem("maxAllowedIron"));
   let minPP = parseInt(localStorage.getItem("minPP"));
 
   if (isNaN(buyRateWood) || isNaN(buyRateClay) || isNaN(buyRateIron) || 
       isNaN(sellRateWood) || isNaN(sellRateClay) || isNaN(sellRateIron) ||
       isNaN(reserveWood) || isNaN(reserveClay) || isNaN(reserveIron) ||
-      isNaN(maxWoodAllowed) || isNaN(maxClayAllowed) ||
-      isNaN(maxIronAllowed) || isNaN(minPP)) {
+      isNaN(maxAllowedWood) || isNaN(maxAllowedClay) ||
+      isNaN(maxAllowedIron) || isNaN(minPP)) {
       alert("Please fill in all configuration fields with valid numbers.");
       return;
   }
@@ -245,9 +205,9 @@ function loadConfigs() {
   document.getElementById("reserveWood").value = reserveWood;
   document.getElementById("reserveClay").value = reserveClay;
   document.getElementById("reserveIron").value = reserveIron;
-  document.getElementById("maxWoodAllowed").value = maxWoodAllowed;
-  document.getElementById("maxClayAllowed").value = maxClayAllowed;
-  document.getElementById("maxIronAllowed").value = maxIronAllowed;
+  document.getElementById("maxAllowedWood").value = maxAllowedWood;
+  document.getElementById("maxAllowedClay").value = maxAllowedClay;
+  document.getElementById("maxAllowedIron").value = maxAllowedIron;
   document.getElementById("minPP").value = minPP;
 
   // load button states
@@ -290,12 +250,12 @@ function saveConfigs() {
   localStorage.setItem("reserveClay", document.getElementById("reserveClay").value);
   // reserveIron
   localStorage.setItem("reserveIron", document.getElementById("reserveIron").value);
-  // maxWoodAllowed
-  localStorage.setItem("maxWoodAllowed", document.getElementById("maxWoodAllowed").value);
-  // maxClayAllowed
-  localStorage.setItem("maxClayAllowed", document.getElementById("maxClayAllowed").value);
-  // maxIronAllowed
-  localStorage.setItem("maxIronAllowed", document.getElementById("maxIronAllowed").value);
+  // maxAllowedWood
+  localStorage.setItem("maxAllowedWood", document.getElementById("maxAllowedWood").value);
+  // maxAllowedClay
+  localStorage.setItem("maxAllowedClay", document.getElementById("maxAllowedClay").value);
+  // maxAllowedIron
+  localStorage.setItem("maxAllowedIron", document.getElementById("maxAllowedIron").value);
   // minPP
   localStorage.setItem("minPP", document.getElementById("minPP").value);
   // comprar ativo bool localstorage
@@ -307,6 +267,355 @@ function saveConfigs() {
 }
 
 
+/**
+ * 
+ * @param { wood: x, clay: y, iron: z } needs - This is the difference between current warehouse (including incoming) and max wanted
+ * @param { wood: w, clay: c, iron: i } rates - This is the buy rates for each resource (must include the extra cost 0,5 or so)
+ * @param { wood: w, clay: c, iron: i } minRates - This is the minimum acceptable buy rates for each resource ( user choice )
+ * @param {number} maxCoins - this is the difference between the current PPs and the minimum PPs to keep
+ * @returns {wood: w, clay: c, iron: i} - The optimal amounts of each resource to buy
+ */
+function getOptimalResources(needs, rates, minRates, maxCoins) {
+  // Filter resources based on minimum rate requirements
+  const validNeeds = {};
+  const validRates = {};
+
+  // Only include resources that meet minimum rate requirements
+  if (rates.wood >= minRates.wood) {
+    validNeeds.wood = needs.wood;
+    validRates.wood = rates.wood;
+  } else {
+    validNeeds.wood = 0;
+    validRates.wood = 1; // Set to 1 to avoid division issues
+  }
+
+  if (rates.clay >= minRates.clay) {
+    validNeeds.clay = needs.clay;
+    validRates.clay = rates.clay;
+  } else {
+    validNeeds.clay = 0;
+    validRates.clay = 1; // Set to 1 to avoid division issues
+  }
+
+  if (rates.iron >= minRates.iron) {
+    validNeeds.iron = needs.iron;
+    validRates.iron = rates.iron;
+  } else {
+    validNeeds.iron = 0;
+    validRates.iron = 1; // Set to 1 to avoid division issues
+  }
+
+  // Extract filtered needs and rates
+  const { wood: needWood, clay: needClay, iron: needIron } = validNeeds;
+  const { wood: rateWood, clay: rateClay, iron: rateIron } = validRates;
+
+  let bestAllocation = null;
+  let bestScore = -1;
+
+  // Calculate maximum possible coins for each resource based on needs and budget
+  const maxWoodCoins = needWood > 0 ? Math.min(Math.floor(needWood / rateWood), maxCoins) : 0;
+  const maxClayCoins = needClay > 0 ? Math.min(Math.floor(needClay / rateClay), maxCoins) : 0;
+  const maxIronCoins = needIron > 0 ? Math.min(Math.floor(needIron / rateIron), maxCoins) : 0;
+
+  // Try all combinations of coins
+  for (let woodCoins = 0; woodCoins <= maxWoodCoins; woodCoins++) {
+    for (let clayCoins = 0; clayCoins <= maxClayCoins; clayCoins++) {
+      for (let ironCoins = 0; ironCoins <= maxIronCoins; ironCoins++) {
+
+        // Calculate total coins needed
+        const totalCoins = woodCoins + clayCoins + ironCoins;
+
+        // Skip if exceeds budget
+        if (totalCoins > maxCoins) continue;
+
+        // Calculate resources from coins
+        const woodAmount = woodCoins * rateWood;
+        const clayAmount = clayCoins * rateClay;
+        const ironAmount = ironCoins * rateIron;
+
+        // Double-check we don't exceed needs
+        if (woodAmount > needWood || clayAmount > needClay || ironAmount > needIron) {
+          continue;
+        }
+
+        // Calculate satisfaction score (how well we meet our needs)
+        const woodSatisfaction = needWood > 0 ? woodAmount / needWood : 1;
+        const claySatisfaction = needClay > 0 ? clayAmount / needClay : 1;
+        const ironSatisfaction = needIron > 0 ? ironAmount / needIron : 1;
+
+        // Total resources obtained
+        const totalResources = woodAmount + clayAmount + ironAmount;
+        const totalNeeds = needWood + needClay + needIron;
+
+        // Score based on:
+        // 1. How much of our total needs we satisfy
+        // 2. How balanced the satisfaction is across all resources
+        const totalSatisfaction = totalNeeds > 0 ? totalResources / totalNeeds : 1;
+        const balanceScore = Math.min(woodSatisfaction, claySatisfaction, ironSatisfaction);
+
+        // Combined score: prioritize total satisfaction but with balance consideration
+        let score = totalSatisfaction * 0.7 + balanceScore * 0.3;
+
+        // Bonus for efficient use (getting more resources per coin)
+        if (totalCoins > 0) {
+          const resourcesPerCoin = totalResources / totalCoins;
+          score += resourcesPerCoin * 0.001; // Small bonus for efficiency
+        }
+
+        // Update best allocation
+        if (score > bestScore) {
+          bestScore = score;
+          bestAllocation = {
+            wood: woodAmount,
+            clay: clayAmount,
+            iron: ironAmount
+          };
+        }
+      }
+    }
+  }
+
+  return bestAllocation;
+}
+
+// Helper class to get and validate user configurations from localStorage
+// has extra validation to ensure numbers are valid and catch erros early 
+class Getter {
+  // throws error for easy error catching
+  static validateNumber(value) {
+    if (!Number.isInteger(value) && value >= 0) {
+      console.error("Invalid number:", value);
+      throw new Error("Invalid number");
+    }
+    return value;
+  }
+  
+  // Gets user configured Max Wanted amounts based on prefix
+  // param {string} prefix - The prefix for the localStorage keys (e.g., "maxAllowed")
+  // returns { wood: x, clay: y, iron: z }
+  static getResourcesFromPrefix(prefix) {
+    let wood = this.validateNumber(parseInt(localStorage.getItem(`${prefix}Wood`)));
+    let clay = this.validateNumber(parseInt(localStorage.getItem(`${prefix}Clay`)));
+    let iron = this.validateNumber(parseInt(localStorage.getItem(`${prefix}Iron`)));
+    
+    return { wood, clay, iron };
+  }
+
+  // Gets user configured Buy Rates
+  // returns { wood: x, clay: y, iron: z }
+  static getUserBuyRates() {
+    return this.getResourcesFromPrefix("buyRate");
+  }
+
+  // Gets user configured Sell Rates
+  // returns { wood: x, clay: y, iron: z }
+  static getUserSellRates() {
+    return this.getResourcesFromPrefix("sellRate");
+  }
+
+  // Gets user configured Reserve amounts
+  // returns { wood: x, clay: y, iron: z }
+  static getUserReserves() {
+    return this.getResourcesFromPrefix("reserve");
+  }
+
+  // Gets user configured max allowed amounts
+  // returns { wood: x, clay: y, iron: z }
+  static getUserMaxAllowed() {
+    return this.getResourcesFromPrefix("maxAllowed");
+  }
+
+  static getMinPP() {
+    let minPP = this.validateNumber(parseInt(localStorage.getItem("minPP")));
+    return minPP;
+  }
+
+  static isBuyActive() {
+    return localStorage.getItem("comprarAtivo") === "true";
+  }
+  
+  static isSellActive() {
+    return localStorage.getItem("venderAtivo") === "true";
+  }
+  
+  static isScriptActive() {
+    return localStorage.getItem("scriptLigado") === "true";
+  }
+
+  static getAvailablePPs() {
+    return (this.validateNumber(parseInt(document.querySelector("#premium_points").textContent)) - this.getMinPP() >= 0 ? 
+           this.validateNumber(parseInt(document.querySelector("#premium_points").textContent)) - this.getMinPP() : 0);
+  }
+
+  /**
+   * @returns {number} The maximum transport capacity of the merchant
+   */
+  static getMerchantCapacity() {
+    return parseInt(document.getElementById('market_merchant_max_transport').textContent) || 0;
+  }
+
+  // returns { wood: x, clay: y, iron: z } which are the current buy rates including the extra cost
+  // reads directly from the page
+  // throws error if something is wrong for easy error catching
+  static getCurrentRates() {
+      return {
+        wood: this.validateNumber(parseInt(document.querySelector("#premium_exchange_rate_wood > div:nth-child(1)").textContent.split('.').join(''))),
+        clay: this.validateNumber(parseInt(document.querySelector("#premium_exchange_rate_stone > div:nth-child(1)").textContent.split('.').join(''))),
+        iron: this.validateNumber(parseInt(document.querySelector("#premium_exchange_rate_iron > div:nth-child(1)").textContent.split('.').join('')))
+      }
+  }
+
+
+  /** 
+    * Get current resources and max warehouse capacity
+    * @returns {Object} An object containing current resources and max warehouse capacity as numbers
+    * @example
+    * const resources = getResources();
+    * console.log(resources);
+    * { currentWood: '1000', currentClay: '800', currentIron: '600', maxWarehouse: '2000' }
+    */
+  static getCurrentResources() {
+    return {
+      currentWood: parseInt(document.getElementById('wood').textContent) || 0,
+      currentClay: parseInt(document.getElementById('stone').textContent) || 0,
+      currentIron: parseInt(document.getElementById('iron').textContent) || 0,
+      maxWarehouse: parseInt(document.getElementById('storage').textContent) || 0
+    }
+  }
+
+  // direction "in" or "out"
+  // returns { wood: x, clay: y, iron: z } which are the resources in transit depending on direction
+  static getResourcesInTransit(direction) {
+      let incommings = {wood: 0, clay: 0, iron: 0};
+      const row = document.querySelector("#market_status_bar > table:nth-child(2)");
+      if (!row) return incommings;
+
+      const text = direction == "in" ? "A chegar" : "De saída";
+      const incommingRow = Array.from(row.querySelectorAll("th")).find(th => th.textContent.includes(text));
+      if (!incommingRow) return incommings;
+
+      const spans = incommingRow.querySelectorAll("span.nowrap");
+      spans.forEach(span => {
+        if (span.innerHTML.includes('icon header wood')) {
+          incommings.wood = this.validateNumber(parseInt(span.textContent.split('.').join('')));
+        } else if (span.innerHTML.includes('icon header stone')) {
+          incommings.clay = this.validateNumber(parseInt(span.textContent.split('.').join('')));
+        } else if (span.innerHTML.includes('icon header iron')) {
+          incommings.iron = this.validateNumber(parseInt(span.textContent.split('.').join('')));
+        }
+      });
+
+      return incommings;
+    }
+
+    // calculates how much more resources are needed to reach max wanted without going over the max for each resource
+    // takes into account current resources + incoming resources
+    // returns { wood: x, clay: y, iron: z }
+    static getResourcesNeeded() {
+      const current = this.getCurrentResources();
+      const incoming = this.getResourcesInTransit("in");
+      const maxAllowed = this.getUserMaxAllowed();
+      
+      return {
+        wood: (current.currentWood + incoming.wood) >= maxAllowed.wood ? 0 : (maxAllowed.wood - (current.currentWood + incoming.wood)),
+        clay: (current.currentClay + incoming.clay) >= maxAllowed.clay ? 0 : (maxAllowed.clay - (current.currentClay + incoming.clay)),
+        iron: (current.currentIron + incoming.iron) >= maxAllowed.iron ? 0 : (maxAllowed.iron - (current.currentIron + incoming.iron))
+      };
+    }
+}
+
+
+/**
+ * Buys the specified resources at the current market rates.
+ * @param {Object} resources - An object containing the amounts of each resource to buy (e.g., { wood: x, clay: y, iron: z }).
+ * @param {Object} currentRates - An object containing the current market rates for each resource (e.g., { wood: x, clay: y, iron: z }).
+ * Needed for redundancy check
+ */
+async function buyResources(resources, currentRates) {
+  function buyResource(resource, ammount, currentRate) {
+    resource = resource == "clay" ? "stone" : resource; // clay is stone in the HTML
+        const inputBuy = document.querySelector(`#premium_exchange_buy_${resource} > div:nth-child(1) > input`)
+        inputBuy.value = ammount;
+
+
+    // calcular best option button
+    document.querySelector("#premium_exchange_form > input").click();
+
+    setTimeout(async () => {
+      // extra confirmation step for rate
+      if (currentRate < parseInt(document.querySelector(`#premium_exchange_rate_${resource} > div:nth-child(1)`).textContent.split('.').join(''))) {
+        console.error(`Market rate for ${resource} has changed. Aborting buy.`);
+        document.querySelector("#premium_exchange > div > div > div.confirmation-buttons > button.btn.evt-cancel-btn.btn-confirm-no").click();
+        inputBuy.value = '';
+        return;
+      }
+
+      console.log(`Attempting to buy ${ammount} of ${resource}`);
+      document.querySelector("#premium_exchange > div > div > div.confirmation-buttons > button.btn.evt-confirm-btn.btn-confirm-yes").click()
+      
+      // if resources have changed mid buying loop it will appear a new message to confirm with the different rate
+      // wait a bit to see if the confirmation box appears
+      await sleep(250);
+      if (document.querySelector("#premium_exchange.confirmation-box")) {
+        console.log("Confirmation box detected, verifying rate again...");
+        if (currentRate < parseInt(document.querySelector(`#premium_exchange_rate_${resource} > div:nth-child(1)`).textContent.split('.').join(''))) {
+          console.error(`Market rate for ${resource} has changed. Aborting buy.`);
+          document.querySelector("#premium_exchange > div > div > div.confirmation-buttons > button.btn.evt-cancel-btn.btn-confirm-no").click();
+        } else {
+          console.log(`Bought ${ammount} of ${resource}`);
+          //document.querySelector("#premium_exchange > div > div > div.confirmation-buttons > button.btn.evt-confirm-btn.btn-confirm-yes").click();
+          inputBuy.value = '';
+        }
+      }
+      
+      inputBuy.value = '';
+
+    }, 1000);
+  }
+
+
+  for (const resource in resources) {
+    if (resources[resource] > 0) {
+      buyResource(resource, resources[resource], currentRates[resource]);
+      await sleep(5500); // wait for the buy to complete before next buy
+    }
+  }
+}
+
+
+function traddingLoop() {
+  // if script is not activated return
+  if (!Getter.isScriptActive()) return;
+
+  if (Getter.isBuyActive()) {
+    // buy logic
+    const resourcesNeeded = Getter.getResourcesNeeded();
+    const currentRates = Getter.getCurrentRates();
+    const userBuyRates = Getter.getUserBuyRates();
+    const availablePPs = Getter.getAvailablePPs();
+
+    console.log("Resources Needed:", resourcesNeeded);
+    console.log("Current Rates:", currentRates);
+    console.log("User Buy Rates:", userBuyRates);
+    console.log("Available PPs:", availablePPs);
+    let resourcesToBuy = getOptimalResources(
+      Getter.getResourcesNeeded(), 
+      Getter.getCurrentRates(), 
+      Getter.getUserBuyRates(), 
+      Getter.getAvailablePPs()
+    );
+    console.log("Resources to Buy:", resourcesToBuy);
+
+    //buyResources(resourcesToBuy, currentRates);
+    buyResources({wood: 1, clay:1, iron: 1}, currentRates);
+  }
+
+  // todo vender ativo
+  setTimeout(traddingLoop, 15000); // runs every 5 seconds
+}
 
 loadHTML();
 
+console.log("Script Loaded!");
+console.log("Starting trading loop in 5 seconds...");
+setTimeout(traddingLoop, 5000);
