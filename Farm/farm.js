@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Test Script
+// @name         Farm Script
 // @namespace    https://github.com/Artur-2k/TW-Scripts
 // @version      v1.0
 // @description  Learning scripting
@@ -33,8 +33,12 @@ class FarmScript {
     #maxSendTime;
     #maxDistance;
     #maxWall;
+    #unitsPresent = {};
+    #modelUnitsA = {};
+    #modelUnitsB = {};
     #allowModelA;
     #allowModelB;
+    #prioFullLoot;
     #allowYellowReports;
     #allowBlueReports;
 
@@ -59,6 +63,20 @@ class FarmScript {
         // Attach event listener to run script button 
         // this swaps run button to stop button and vice versa
         document.getElementById('runScriptBtn').addEventListener('click', this.#toggleStartStop);
+
+        // Attach event listener to Prioritize Full Loot checkbox so it activates Model B 
+        document.getElementById('fullLoot').addEventListener('change', (event) => {
+            if (event.target.checked) {
+                document.getElementById('modelB').checked = true;
+            }
+        });
+
+        // Attach event listener to Model B to deactivate Prioritize Full Loot if Model B is unchecked 
+        document.getElementById('modelB').addEventListener('change', (event) => {
+            if (!event.target.checked) {
+                document.getElementById('fullLoot').checked = false;
+            }
+        });
 
         // Start farming if it was running before page reload
         if (this.#isRunning) {
@@ -88,12 +106,16 @@ class FarmScript {
     // Load preferences from localStorage if they exist, otherwise use defaults
     #loadPreferences() {
         this.#refreshInterval = parseInt(localStorage.getItem('refreshInterval'), 10) || 60000;
+        if (this.#refreshInterval < 25000) {
+            this.#refreshInterval = 60000; // Minimum 25 seconds
+        }
         this.#minSendTime = parseInt(localStorage.getItem('minSendTime'), 10) || 500;
         this.#maxSendTime = parseInt(localStorage.getItem('maxSendTime'), 10) || 2000;
         this.#maxDistance = parseInt(localStorage.getItem('maxDistance'), 10) || 999;
         this.#maxWall = parseInt(localStorage.getItem('maxWall'), 10) || 0;
         this.#allowModelA = localStorage.getItem('modelA') === "true";
         this.#allowModelB = localStorage.getItem('modelB') === "true";
+        this.#prioFullLoot = localStorage.getItem('fullLoot') === "true";
         this.#allowYellowReports = localStorage.getItem('allowYellowReports') === "true";
         this.#allowBlueReports = localStorage.getItem('allowBlueReports') === "true";
 
@@ -114,31 +136,35 @@ class FarmScript {
         
         // Adding a random noise to the refresh interval to avoid pattern detection
         this.#refreshInterval = parseInt(document.getElementById('refreshInterval').value, 10) * 1000 || 60000;
-        
-        let maxNoise = 20000; 
-        let noise = (Math.random() * 2 * maxNoise) - maxNoise;
-        this.#refreshInterval += noise;
-
         if (this.#refreshInterval < 25000) {
             alert("Refresh interval must be at least 25 seconds.");
             return;
         }
+        let refreshInterval = this.#refreshInterval;
+        let maxNoise = 20000; 
+        let noise = (Math.random() * 2 * maxNoise) - maxNoise;
+        this.#refreshInterval += noise;
+
 
         this.#maxDistance = parseInt(document.getElementById('maxDistance').value, 10) || 999;
         this.#maxWall = parseInt(document.getElementById('maxWall').value, 10) || 0;
         this.#allowModelA = document.getElementById('modelA').checked;
         this.#allowModelB = document.getElementById('modelB').checked;
+        
+        this.#prioFullLoot = document.getElementById('fullLoot').checked;
+        
         this.#allowYellowReports = document.getElementById('allowYellowReports').checked;
         this.#allowBlueReports = document.getElementById('allowBlueReports').checked;
 
         // Save to localStorage
-        localStorage.setItem('refreshInterval', this.#refreshInterval);
+        localStorage.setItem('refreshInterval', refreshInterval);
         localStorage.setItem('minSendTime', this.#minSendTime);
         localStorage.setItem('maxSendTime', this.#maxSendTime);
         localStorage.setItem('maxDistance', this.#maxDistance);
         localStorage.setItem('maxWall', this.#maxWall);
         localStorage.setItem('modelA', this.#allowModelA);
         localStorage.setItem('modelB', this.#allowModelB);
+        localStorage.setItem('fullLoot', this.#prioFullLoot);
         localStorage.setItem('allowYellowReports', this.#allowYellowReports);
         localStorage.setItem('allowBlueReports', this.#allowBlueReports);
 
@@ -199,27 +225,31 @@ class FarmScript {
             <!-- Main Configuration Table -->
             <table style="width: 100%; padding: 15px;">
                 <tr>
-                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 15%;">
+                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 14%;">
                         <div style="margin-bottom: 5px;">📍</div>
                         Max Distance
                     </th>
-                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 15%;">
+                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 14%;">
                         <div style="margin-bottom: 5px;">🏰</div>
                         Max Wall
                     </th>
-                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 15%;">
+                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 14%;">
                         <div style="margin-bottom: 5px;">⚔️</div>
                         Model A
                     </th>
-                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 15%;">
+                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 14%;">
                         <div style="margin-bottom: 5px;">⚔️</div>
                         Model B
                     </th>
-                    <th style="padding: 5px; border: 1px solid #060606ff; font-weight: bold; text-align: center; width: 15%;">
+                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 14%;">
+                        <div style="margin-bottom: 5px;">💰</div>
+                        Prioritize Full Loot
+                    </th>
+                    <th style="padding: 5px; border: 1px solid #060606ff; font-weight: bold; text-align: center; width: 14%;">
                         <div style="margin-bottom: 5px;">🟡</div>
                         Yellow Report
                     </th>
-                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 15%;">
+                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 14%;">
                         <div style="margin-bottom: 5px;">🔵</div>
                         Blue Report
                     </th>
@@ -242,6 +272,9 @@ class FarmScript {
                     </td>
                     <td style="padding: 5px; background: #fff5d6; border: 1px solid #804000; text-align: center;">
                         <input id="modelB" type="checkbox" ${this.#allowModelB ? 'checked' : ''} style="transform: scale(1.2);">
+                    </td>
+                    <td style="padding: 5px; background: #fff5d6; border: 1px solid #804000; text-align: center;">
+                        <input id="fullLoot" type="checkbox" ${this.#prioFullLoot ? 'checked' : ''} style="transform: scale(1.2);">
                     </td>
                     <td style="padding: 5px; background: #fff5d6; border: 1px solid #804000; text-align: center;">
                         <input id="allowYellowReports" type="checkbox" ${this.#allowYellowReports ? 'checked' : ''} style="transform: scale(1.2);">
@@ -326,6 +359,19 @@ class FarmScript {
         return undefined;
     }
 
+    #getLastLoot(row) {
+        const imgElement = row.querySelector("td:nth-child(3) > img");
+        if (!imgElement || !imgElement.src) return null;
+
+        if (imgElement.src.endsWith("/1.webp")) {
+            return "full";   // full loot
+        } else if (imgElement.src.endsWith("/0.webp")) {
+            return "partial"; // partial loot
+        }
+
+        return null; // fallback in case src doesn't match expected
+    }
+
     #getModelUnits(model) {
         let units;
         if (model === 'A') {
@@ -348,49 +394,74 @@ class FarmScript {
             }
     }
 
-    async #startFarming() {
-        // Select all farm rows in the farm list table
-        // id^=village_ selects rows with ids starting with 'village_' (ie. farm entries)
-        // td:nth-child(9) > a selects the anchor tag that corresponds to the farm action a 
-        // td:nth-child(10) > a selects the anchor tag that corresponds to the farm action b
+async #startFarming() {
+    this.#unitsPresent = this.#getUnitsPresent();
+    this.#modelUnitsA = this.#getModelUnits('A');
+    this.#modelUnitsB = this.#getModelUnits('B');
 
-        // on a while cuz of page entry size and dynamic loading of rows 
-        while (this.#isRunning) {
-            let farms = Array.from(document.querySelectorAll("#plunder_list > tbody > tr[id^=village_]")).filter(row => row.style.display !== "none");
-            if (farms.length === 0) {break;} // Exit if no farms available
+    let attackSent;
 
-            let attackSent = false;
-            for (let farm of farms) {
-                if (this.#getWallLevel(farm) > this.#maxWall) {
-                    continue; // Skip if wall level exceeds maxWall
-                }
+    // Continue farming until no more attacks can be sent
+    while (this.#isRunning) {
+        let farms = Array.from(document.querySelectorAll("#plunder_list > tbody > tr[id^=village_]")).filter(row => row.style.display !== "none");
+        if (farms.length === 0) {
+            break;
+        }
 
-                if (this.#getDistance(farm) > this.#maxDistance) {
-                    continue; // Skip if distance exceeds maxDistance
-                }
+        attackSent = false;
+        for (let farm of farms) {
+            if (!this.#isRunning) break; // Check if script was stopped
 
-                const reportColor = this.#getReportColor(farm);
-                if ((reportColor !== "green") && 
+            // Skip farms that don't meet criteria
+            if (this.#getWallLevel(farm) > this.#maxWall) {
+                continue;
+            }
+
+            if (this.#getDistance(farm) > this.#maxDistance) {
+                continue;
+            }
+
+            const reportColor = this.#getReportColor(farm);
+            if ((reportColor !== "green") && 
                 ((reportColor === "yellow" && !this.#allowYellowReports) || 
-                (reportColor === "blue" && !this.#allowBlueReports))) {
-                    continue; // Skip if report color is not allowed ( only green, yellow and blues )
-                }
+                 (reportColor === "blue" && !this.#allowBlueReports))) {
+                continue;
+            }
 
-                if (this.#isRunning === false) break; // Redundancy check
+            // Determine attack order based on loot priority
+            let order;
+            const lootStatus = this.#getLastLoot(farm);
 
-                if (this.#allowModelA) {
-                    attackSent = await this.#farmModel(farm, 'A');
-                }
-                if (!attackSent && this.#allowModelB) {
-                    attackSent = await this.#farmModel(farm, 'B');
-                }
-                if (!attackSent) {
-                    break; // Exit loop if no attack was sent (either out of units or both models disabled)
+            if (this.#prioFullLoot && lootStatus === "full") {
+                order = ["B", "A"];
+            } else {
+                order = ["A", "B"];
+            }
+
+            // Try attacks in order
+            for (const model of order) {
+                const allowModel = model === 'A' ? this.#allowModelA : this.#allowModelB;
+                
+                if (allowModel) {
+                    attackSent = await this.#farmModel(farm, model);
+                    if (attackSent) {
+                        break; // Break out of model order loop, continue to next farm
+                    }
                 }
             }
-            if (!attackSent) break;
+            // If we couldn't send any attack for this farm due to lack of units,
+            // we can't attack any other farms either, so break
+            if (!attackSent) {
+                break;
+            }
+        }
+
+        // If we went through all farms and didn't send any attacks this round, we're done
+        if (!attackSent) {
+            break;
         }
     }
+}
 
     // td:nth-child(9) > a selects the anchor tag that corresponds to the farm action a
     // td:nth-child(10) > a selects the anchor tag that corresponds to the farm action b
@@ -398,11 +469,9 @@ class FarmScript {
     // this function assumes that the farm meets all criteria to be attacked and only checks if
     // there are enough units to send the attack
     async #farmModel(farm, model) {
-        const modelUnits = this.#getModelUnits(model);
-        const unitsPresent = this.#getUnitsPresent();
-
-        for (let unit in modelUnits) {
-            if (modelUnits[unit] > unitsPresent[unit]) {
+        const currentModel = model === 'A' ? this.#modelUnitsA : this.#modelUnitsB;
+        for (let unit in currentModel) {
+            if (currentModel[unit] > this.#unitsPresent[unit]) {
                 return false; // Not enough units
             }
         }
@@ -412,6 +481,11 @@ class FarmScript {
         await sleep(interval);
 
         farm.querySelector(`td:nth-child(${model === 'A' ? 9 : 10}) > a`).click();
+        
+        // Update units present after sending the attack
+        for (let units in currentModel) {
+            this.#unitsPresent[units] -= currentModel[units];
+        }
 
         return true; // Attack sent
     }
