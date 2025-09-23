@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name         Farm Script
+// @name         Farm God
 // @namespace    https://github.com/Artur-2k/TW-Scripts
 // @version      v1.0
-// @description  Learning scripting
+// @description  Farm like a god.
 // @author       Mini
-// @match        https://pt109.tribalwars.com.pt/game.php?village=*&screen=am_farm
-// @match        https://pt109.tribalwars.com.pt/game.php?screen=am_farm&village=*
+// @match        *game.php?village=*&screen=am_farm*
+// @match        *game.php?screen=am_farm&village=*
 // @icon         https://cdn.iconscout.com/icon/premium/png-256-thumb/farming-icon-svg-png-download-1641339.png
 // @grant        none
 // ==/UserScript==
