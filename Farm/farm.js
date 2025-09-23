@@ -33,6 +33,9 @@ class FarmScript {
     #maxSendTime;
     #maxDistance;
     #maxWall;
+    #unitsPresent = {};
+    #modelUnitsA = {};
+    #modelUnitsB = {};
     #allowModelA;
     #allowModelB;
     #allowYellowReports;
@@ -357,6 +360,10 @@ class FarmScript {
         // td:nth-child(9) > a selects the anchor tag that corresponds to the farm action a 
         // td:nth-child(10) > a selects the anchor tag that corresponds to the farm action b
 
+        this.#unitsPresent = this.#getUnitsPresent();
+        this.#modelUnitsA = this.#getModelUnits('A');
+        this.#modelUnitsB = this.#getModelUnits('B');
+
         // on a while cuz of page entry size and dynamic loading of rows 
         while (this.#isRunning) {
             let farms = Array.from(document.querySelectorAll("#plunder_list > tbody > tr[id^=village_]")).filter(row => row.style.display !== "none");
@@ -401,11 +408,9 @@ class FarmScript {
     // this function assumes that the farm meets all criteria to be attacked and only checks if
     // there are enough units to send the attack
     async #farmModel(farm, model) {
-        const modelUnits = this.#getModelUnits(model);
-        const unitsPresent = this.#getUnitsPresent();
-
-        for (let unit in modelUnits) {
-            if (modelUnits[unit] > unitsPresent[unit]) {
+        const currentModel = model === 'A' ? this.#modelUnitsA : this.#modelUnitsB;
+        for (let unit in currentModel) {
+            if (currentModel[unit] > this.#unitsPresent[unit]) {
                 return false; // Not enough units
             }
         }
@@ -415,6 +420,11 @@ class FarmScript {
         await sleep(interval);
 
         farm.querySelector(`td:nth-child(${model === 'A' ? 9 : 10}) > a`).click();
+        
+        // Update units present after sending the attack
+        for (let units in currentModel) {
+            this.#unitsPresent[units] -= currentModel[units];
+        }
 
         return true; // Attack sent
     }
