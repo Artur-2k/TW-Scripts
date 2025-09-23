@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Test Script
+// @name         Farm Script
 // @namespace    https://github.com/Artur-2k/TW-Scripts
 // @version      v1.0
 // @description  Learning scripting
@@ -88,6 +88,9 @@ class FarmScript {
     // Load preferences from localStorage if they exist, otherwise use defaults
     #loadPreferences() {
         this.#refreshInterval = parseInt(localStorage.getItem('refreshInterval'), 10) || 60000;
+        if (this.#refreshInterval < 25000) {
+            this.#refreshInterval = 60000; // Minimum 25 seconds
+        }
         this.#minSendTime = parseInt(localStorage.getItem('minSendTime'), 10) || 500;
         this.#maxSendTime = parseInt(localStorage.getItem('maxSendTime'), 10) || 2000;
         this.#maxDistance = parseInt(localStorage.getItem('maxDistance'), 10) || 999;
@@ -114,15 +117,15 @@ class FarmScript {
         
         // Adding a random noise to the refresh interval to avoid pattern detection
         this.#refreshInterval = parseInt(document.getElementById('refreshInterval').value, 10) * 1000 || 60000;
-        
-        let maxNoise = 20000; 
-        let noise = (Math.random() * 2 * maxNoise) - maxNoise;
-        this.#refreshInterval += noise;
-
         if (this.#refreshInterval < 25000) {
             alert("Refresh interval must be at least 25 seconds.");
             return;
         }
+        let refreshInterval = this.#refreshInterval;
+        let maxNoise = 20000; 
+        let noise = (Math.random() * 2 * maxNoise) - maxNoise;
+        this.#refreshInterval += noise;
+
 
         this.#maxDistance = parseInt(document.getElementById('maxDistance').value, 10) || 999;
         this.#maxWall = parseInt(document.getElementById('maxWall').value, 10) || 0;
@@ -132,7 +135,7 @@ class FarmScript {
         this.#allowBlueReports = document.getElementById('allowBlueReports').checked;
 
         // Save to localStorage
-        localStorage.setItem('refreshInterval', this.#refreshInterval);
+        localStorage.setItem('refreshInterval', refreshInterval);
         localStorage.setItem('minSendTime', this.#minSendTime);
         localStorage.setItem('maxSendTime', this.#maxSendTime);
         localStorage.setItem('maxDistance', this.#maxDistance);
