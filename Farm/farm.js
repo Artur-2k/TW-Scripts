@@ -38,6 +38,7 @@ class FarmScript {
     #modelUnitsB = {};
     #allowModelA;
     #allowModelB;
+    #prioFullLoot;
     #allowYellowReports;
     #allowBlueReports;
 
@@ -100,6 +101,7 @@ class FarmScript {
         this.#maxWall = parseInt(localStorage.getItem('maxWall'), 10) || 0;
         this.#allowModelA = localStorage.getItem('modelA') === "true";
         this.#allowModelB = localStorage.getItem('modelB') === "true";
+        this.#prioFullLoot = localStorage.getItem('fullLoot') === "true";
         this.#allowYellowReports = localStorage.getItem('allowYellowReports') === "true";
         this.#allowBlueReports = localStorage.getItem('allowBlueReports') === "true";
 
@@ -134,6 +136,7 @@ class FarmScript {
         this.#maxWall = parseInt(document.getElementById('maxWall').value, 10) || 0;
         this.#allowModelA = document.getElementById('modelA').checked;
         this.#allowModelB = document.getElementById('modelB').checked;
+        this.#prioFullLoot = document.getElementById('fullLoot').checked;
         this.#allowYellowReports = document.getElementById('allowYellowReports').checked;
         this.#allowBlueReports = document.getElementById('allowBlueReports').checked;
 
@@ -145,6 +148,7 @@ class FarmScript {
         localStorage.setItem('maxWall', this.#maxWall);
         localStorage.setItem('modelA', this.#allowModelA);
         localStorage.setItem('modelB', this.#allowModelB);
+        localStorage.setItem('fullLoot', this.#prioFullLoot);
         localStorage.setItem('allowYellowReports', this.#allowYellowReports);
         localStorage.setItem('allowBlueReports', this.#allowBlueReports);
 
@@ -221,6 +225,10 @@ class FarmScript {
                         <div style="margin-bottom: 5px;">⚔️</div>
                         Model B
                     </th>
+                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 15%;">
+                        <div style="margin-bottom: 5px;">💰</div>
+                        Prioritize Full Loot
+                    </th>
                     <th style="padding: 5px; border: 1px solid #060606ff; font-weight: bold; text-align: center; width: 15%;">
                         <div style="margin-bottom: 5px;">🟡</div>
                         Yellow Report
@@ -248,6 +256,9 @@ class FarmScript {
                     </td>
                     <td style="padding: 5px; background: #fff5d6; border: 1px solid #804000; text-align: center;">
                         <input id="modelB" type="checkbox" ${this.#allowModelB ? 'checked' : ''} style="transform: scale(1.2);">
+                    </td>
+                    <td style="padding: 5px; background: #fff5d6; border: 1px solid #804000; text-align: center;">
+                        <input id="fullLoot" type="checkbox" ${this.#prioFullLoot ? 'checked' : ''} style="transform: scale(1.2);">
                     </td>
                     <td style="padding: 5px; background: #fff5d6; border: 1px solid #804000; text-align: center;">
                         <input id="allowYellowReports" type="checkbox" ${this.#allowYellowReports ? 'checked' : ''} style="transform: scale(1.2);">
@@ -332,6 +343,19 @@ class FarmScript {
         return undefined;
     }
 
+    #getLastLoot(row) {
+        const imgElement = row.querySelector("td:nth-child(3) > img");
+        if (!imgElement || !imgElement.src) return null;
+
+        if (imgElement.src.endsWith("/1.webp")) {
+            return "full";   // full loot
+        } else if (imgElement.src.endsWith("/0.webp")) {
+            return "partial"; // partial loot
+        }
+
+        return null; // fallback in case src doesn't match expected
+    }
+
     #getModelUnits(model) {
         let units;
         if (model === 'A') {
@@ -354,53 +378,78 @@ class FarmScript {
             }
     }
 
-    async #startFarming() {
-        // Select all farm rows in the farm list table
-        // id^=village_ selects rows with ids starting with 'village_' (ie. farm entries)
-        // td:nth-child(9) > a selects the anchor tag that corresponds to the farm action a 
-        // td:nth-child(10) > a selects the anchor tag that corresponds to the farm action b
+async #startFarming() {
+    this.#unitsPresent = this.#getUnitsPresent();
+    this.#modelUnitsA = this.#getModelUnits('A');
+    this.#modelUnitsB = this.#getModelUnits('B');
 
-        this.#unitsPresent = this.#getUnitsPresent();
-        this.#modelUnitsA = this.#getModelUnits('A');
-        this.#modelUnitsB = this.#getModelUnits('B');
+    let attackSent;
 
-        // on a while cuz of page entry size and dynamic loading of rows 
-        while (this.#isRunning) {
-            let farms = Array.from(document.querySelectorAll("#plunder_list > tbody > tr[id^=village_]")).filter(row => row.style.display !== "none");
-            if (farms.length === 0) {break;} // Exit if no farms available
+    // Continue farming until no more attacks can be sent
+    while (this.#isRunning) {
+        let farms = Array.from(document.querySelectorAll("#plunder_list > tbody > tr[id^=village_]")).filter(row => row.style.display !== "none");
+        if (farms.length === 0) {
+            break;
+        }
 
-            let attackSent = false;
-            for (let farm of farms) {
-                if (this.#getWallLevel(farm) > this.#maxWall) {
-                    continue; // Skip if wall level exceeds maxWall
-                }
+        attackSent = false;
+        for (let farm of farms) {
+            if (!this.#isRunning) break; // Check if script was stopped
 
-                if (this.#getDistance(farm) > this.#maxDistance) {
-                    continue; // Skip if distance exceeds maxDistance
-                }
+            // Skip farms that don't meet criteria
+            if (this.#getWallLevel(farm) > this.#maxWall) {
+                continue;
+            }
 
-                const reportColor = this.#getReportColor(farm);
-                if ((reportColor !== "green") && 
+            if (this.#getDistance(farm) > this.#maxDistance) {
+                continue;
+            }
+
+            const reportColor = this.#getReportColor(farm);
+            if ((reportColor !== "green") && 
                 ((reportColor === "yellow" && !this.#allowYellowReports) || 
-                (reportColor === "blue" && !this.#allowBlueReports))) {
-                    continue; // Skip if report color is not allowed ( only green, yellow and blues )
-                }
+                 (reportColor === "blue" && !this.#allowBlueReports))) {
+                continue;
+            }
 
-                if (this.#isRunning === false) break; // Redundancy check
+            // Determine attack order based on loot priority
+            let order;
+            const lootStatus = this.#getLastLoot(farm);
 
-                if (this.#allowModelA) {
-                    attackSent = await this.#farmModel(farm, 'A');
-                }
-                if (!attackSent && this.#allowModelB) {
-                    attackSent = await this.#farmModel(farm, 'B');
-                }
-                if (!attackSent) {
-                    break; // Exit loop if no attack was sent (either out of units or both models disabled)
+            if (this.#prioFullLoot && lootStatus === "full") {
+                order = ["B", "A"];
+            } else {
+                order = ["A", "B"];
+            }
+
+            // Try attacks in order
+            for (const model of order) {
+                const allowModel = model === 'A' ? this.#allowModelA : this.#allowModelB;
+                
+                if (allowModel) {
+                    attackSent = await this.#farmModel(farm, model);
+                    if (attackSent) {
+                        break; // Break out of model order loop, continue to next farm
+                    }
                 }
             }
-            if (!attackSent) break;
+            console.log("aqui");
+            console.log("on village ID", farm.id);
+
+            // If we couldn't send any attack for this farm due to lack of units,
+            // we can't attack any other farms either, so break
+            if (!attackSent) {
+                return; // Exit the farming function completely
+            }
+        }
+
+        // If we went through all farms and didn't send any attacks this round, we're done
+        if (!attackSent) {
+            console.log("No more valid targets or insufficient units. Stopping farming.");
+            break;
         }
     }
+}
 
     // td:nth-child(9) > a selects the anchor tag that corresponds to the farm action a
     // td:nth-child(10) > a selects the anchor tag that corresponds to the farm action b
