@@ -64,6 +64,20 @@ class FarmScript {
         // this swaps run button to stop button and vice versa
         document.getElementById('runScriptBtn').addEventListener('click', this.#toggleStartStop);
 
+        // Attach event listener to Prioritize Full Loot checkbox so it activates Model B 
+        document.getElementById('fullLoot').addEventListener('change', (event) => {
+            if (event.target.checked) {
+                document.getElementById('modelB').checked = true;
+            }
+        });
+
+        // Attach event listener to Model B to deactivate Prioritize Full Loot if Model B is unchecked 
+        document.getElementById('modelB').addEventListener('change', (event) => {
+            if (!event.target.checked) {
+                document.getElementById('fullLoot').checked = false;
+            }
+        });
+
         // Start farming if it was running before page reload
         if (this.#isRunning) {
             this.#startFarming();
@@ -136,7 +150,9 @@ class FarmScript {
         this.#maxWall = parseInt(document.getElementById('maxWall').value, 10) || 0;
         this.#allowModelA = document.getElementById('modelA').checked;
         this.#allowModelB = document.getElementById('modelB').checked;
+        
         this.#prioFullLoot = document.getElementById('fullLoot').checked;
+        
         this.#allowYellowReports = document.getElementById('allowYellowReports').checked;
         this.#allowBlueReports = document.getElementById('allowBlueReports').checked;
 
@@ -209,31 +225,31 @@ class FarmScript {
             <!-- Main Configuration Table -->
             <table style="width: 100%; padding: 15px;">
                 <tr>
-                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 15%;">
+                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 14%;">
                         <div style="margin-bottom: 5px;">📍</div>
                         Max Distance
                     </th>
-                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 15%;">
+                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 14%;">
                         <div style="margin-bottom: 5px;">🏰</div>
                         Max Wall
                     </th>
-                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 15%;">
+                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 14%;">
                         <div style="margin-bottom: 5px;">⚔️</div>
                         Model A
                     </th>
-                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 15%;">
+                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 14%;">
                         <div style="margin-bottom: 5px;">⚔️</div>
                         Model B
                     </th>
-                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 15%;">
+                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 14%;">
                         <div style="margin-bottom: 5px;">💰</div>
                         Prioritize Full Loot
                     </th>
-                    <th style="padding: 5px; border: 1px solid #060606ff; font-weight: bold; text-align: center; width: 15%;">
+                    <th style="padding: 5px; border: 1px solid #060606ff; font-weight: bold; text-align: center; width: 14%;">
                         <div style="margin-bottom: 5px;">🟡</div>
                         Yellow Report
                     </th>
-                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 15%;">
+                    <th style="padding: 5px; border: 1px solid #804000; font-weight: bold; text-align: center; width: 14%;">
                         <div style="margin-bottom: 5px;">🔵</div>
                         Blue Report
                     </th>
@@ -433,9 +449,6 @@ async #startFarming() {
                     }
                 }
             }
-            console.log("aqui");
-            console.log("on village ID", farm.id);
-
             // If we couldn't send any attack for this farm due to lack of units,
             // we can't attack any other farms either, so break
             if (!attackSent) {
@@ -445,7 +458,6 @@ async #startFarming() {
 
         // If we went through all farms and didn't send any attacks this round, we're done
         if (!attackSent) {
-            console.log("No more valid targets or insufficient units. Stopping farming.");
             break;
         }
     }
