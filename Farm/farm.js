@@ -4,8 +4,8 @@
 // @version      v1.0
 // @description  Farm like a god.
 // @author       Mini
-// @match        *game.php?village=*&screen=am_farm*
-// @match        *game.php?screen=am_farm&village=*
+// @match        *://*/game.php?village=*&screen=am_farm*
+// @match        *://*/game.php?screen=am_farm&village=*
 // @icon         https://cdn.iconscout.com/icon/premium/png-256-thumb/farming-icon-svg-png-download-1641339.png
 // @grant        none
 // ==/UserScript==
@@ -375,9 +375,9 @@ class FarmScript {
     #getModelUnits(model) {
         let units;
         if (model === 'A') {
-            units = document.querySelector("#content_value > div:nth-child(4) > div > form > table > tbody > tr:nth-child(2)")
+            units = document.querySelector("#content_value > div:nth-child(6) > div > form > table > tbody > tr:nth-child(2)")
         } else if (model === 'B') {
-            units = document.querySelector("#content_value > div:nth-child(4) > div > form > table > tbody > tr:nth-child(4)")
+            units = document.querySelector("#content_value > div:nth-child(6) > div > form > table > tbody > tr:nth-child(4)")
         } else {
             throw new Error("Invalid model type. Use 'A' or 'B'.");
         }
