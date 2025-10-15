@@ -51,7 +51,14 @@
 
   When saving configuration changes (e.g., enabling/disabling models), the script should maintain its running state if it was running before, unless a critical configuration change requires a restart.
 
+- **Prioritizing B model over A on full Loot**
 
+  Make the script prefer the B model when loot is full.
+
+
+- **Ignore red reports**  (bug fix)
+
+  Currently it is attacking red reports as if it was a green. Should ignore reds if the option to show defeats was on
 
 ### 📚 Como Usar
 
